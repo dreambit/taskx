@@ -1,0 +1,9 @@
+.car {
+    padding: 20px;
+    border: 1px solid gray;
+    border-radius: 8px;
+}
+
+.car > button {
+    margin-top: 20px;
+}

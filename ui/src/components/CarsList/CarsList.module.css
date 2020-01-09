@@ -1,0 +1,25 @@
+.cars {
+    padding: 5px 20px 20px;
+    border: 1px solid lightgray;
+}
+
+.list {
+    display: flex;
+}
+
+.editor input {
+    margin-left: 10px;
+}
+
+.editor select {
+    margin-left: 10px;
+}
+
+.actions {
+    margin-top: 20px;
+}
+
+.cars > h3 {
+    margin: 0 0 10px;
+}
+

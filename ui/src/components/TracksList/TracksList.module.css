@@ -1,0 +1,29 @@
+.tasks {
+    padding: 5px 20px 20px;
+    border: 1px solid lightgray;
+    margin-top: 20px;
+}
+
+.task {
+    padding: 20px;
+    border: 1px solid gray;
+    border-radius: 8px;
+    margin-right: 10px;
+}
+
+.task > button {
+    margin-top: 20px;
+}
+
+
+.list {
+    display: flex;
+}
+
+.actions {
+    margin-top: 20px;
+}
+
+.tasks > h3 {
+    margin: 0 0 10px;
+}

@@ -1,9 +1,6 @@
 const { MongoClient } = require('mongodb');
 
-const username = process.env.DB_USERNAME;
-const password = process.env.DB_PASSWORD;
-
-const url = `mongodb://${username}:${password}@mongo:27017/smartcars`;
+const url = `mongodb://localhost:27018/smartcars`;
 let dbCache;
 
 module.exports = () => {
