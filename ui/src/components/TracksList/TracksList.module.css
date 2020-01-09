@@ -27,3 +27,11 @@
 .tasks > h3 {
     margin: 0 0 10px;
 }
+
+.editor input {
+    margin-left: 10px;
+}
+
+.editor select {
+    margin-left: 10px;
+}

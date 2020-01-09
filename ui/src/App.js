@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
-import { addCar, deleteCar, deleteCarFromTrack, deleteTrack, getCars, getTracks } from './api';
+import { addCar, addTrack, deleteCar, deleteCarFromTrack, deleteTrack, getCars, getTracks } from './api';
 import CarsList from './components/CarsList/CarsList';
 import TracksList from './components/TracksList/TracksList';
 
@@ -36,6 +36,19 @@ class App extends Component {
         cars: [...cars, newCar]
       });
       console.log(`Car ${newCar._id} was added`);
+    }).catch(() => console.log(`Ups...`));
+  }
+
+  handleTrackAdd = (track) => {
+    const {
+      tracks
+    } = this.state;
+
+    addTrack(track).then((newTrack) => {
+      this.setState({
+        tracks: [...tracks, newTrack]
+      });
+      console.log(`Track ${newTrack._id} was added`);
     }).catch(() => console.log(`Ups...`));
   }
 
@@ -98,7 +111,7 @@ class App extends Component {
       <div className="App">
         <input type="text" placeholder="Search for track" value={search} onChange={this.handleInputChange} />
         <CarsList cars={cars} onAdd={this.handleCarAdd} onDelete={this.handleCarDelete} />
-        <TracksList tracks={tracks} onDelete={this.handleTrackDelete} onCarDelete={this.handleDeleteCarFromTrack} />
+        <TracksList cars={cars} tracks={tracks} onAdd={this.handleTrackAdd} onDelete={this.handleTrackDelete} onCarDelete={this.handleDeleteCarFromTrack} />
       </div>
     );
   }

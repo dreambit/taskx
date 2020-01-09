@@ -1,21 +1,29 @@
 const Joi = require('@hapi/joi');
 
-module.exports = Joi.object({
-  code: Joi.string()
-    .min(4)
-    .max(6)
+const code = Joi.string()
+  .min(4)
+  .max(6);
+
+const transmission = Joi.string().valid('manual', 'automatic');
+const ai = Joi.boolean();
+
+const maxSpeed = Joi.object({
+  unit: Joi.string()
+    .valid('mps')
     .required(),
+  value: Joi.number().required()
+});
 
-  transmission: Joi.string()
-    .valid('manual', 'automatic')
-    .required(),
+module.exports.schema = Joi.object({
+  code,
+  transmission,
+  ai,
+  maxSpeed
+});
 
-  ai: Joi.boolean().required(),
-
-  maxSpeed: Joi.object({
-    unit: Joi.string()
-      .valid('mps')
-      .required(),
-    value: Joi.number().required()
-  }).required()
+module.exports.strictSchema = Joi.object({
+  code: code.required(),
+  transmission: transmission.required(),
+  ai: ai.required(),
+  maxSpeed: maxSpeed.required()
 });

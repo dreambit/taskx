@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { ValidationError } = require('@hapi/joi/lib/errors');
 
 const cars = require('./routes/cars');
 const tasks = require('./routes/tracks');
@@ -15,9 +16,19 @@ app.use(express.json());
 app.use('/cars', cars);
 app.use('/tracks', tasks);
 
+// eslint-disable-next-line
 app.use((err, req, res, next) => {
-  console.error(err);
+  const error = err.error || err; // err.error is joi error
+
+  console.error(error);
+
+  if (error instanceof ValidationError) {
+    return res.status(400).json({
+      error: error.message
+    });
+  }
+
   res.sendStatus(500);
 });
 
-app.listen(3000);
+app.listen(3002);

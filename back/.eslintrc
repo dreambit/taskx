@@ -5,7 +5,8 @@
     "linebreak-style": 0,
     "comma-dangle": 0,
     "prettier/prettier": "error",
-    "no-console": "off"
+    "no-console": "off",
+    "max-len": ["error", { "code": 120 }]
   }
 }
 

@@ -1,5 +1,6 @@
 const asyncRoute = require('route-async');
 const { ObjectID } = require('mongodb');
+const { ValidationError } = require('@hapi/joi/lib/errors');
 
 const getDb = require('../../db');
 
@@ -27,33 +28,38 @@ module.exports.getAll = asyncRoute(async (req, res) => {
 });
 
 module.exports.post = asyncRoute(async (req, res) => {
-  const { body } = req;
+  const { body: car } = req;
 
   const db = await getDb();
-  await db.collection('cars').insertOne(body);
+  await db.collection('cars').insertOne(car);
 
-  res.json(body);
+  res.json(car);
 });
 
 module.exports.put = asyncRoute(async (req, res) => {
-  const { body } = req;
+  const { body: car } = req;
 
   const db = await getDb();
 
-  const {
-    result: { nModified }
-  } = await db.collection('cars').replaceOne(
+  const { value: updatedCar } = await db.collection('cars').findOneAndUpdate(
     {
       _id: new ObjectID(req.params.id)
     },
-    body
+    {
+      $set: {
+        ...car
+      }
+    },
+    {
+      returnOriginal: false
+    }
   );
 
-  if (!nModified) {
+  if (!updatedCar) {
     return res.sendStatus(404);
   }
 
-  return res.json(body);
+  return res.json(updatedCar);
 });
 
 module.exports.deleteCar = asyncRoute(async (req, res) => {
@@ -68,7 +74,7 @@ module.exports.deleteCar = asyncRoute(async (req, res) => {
     .count();
 
   if (tracksCount) {
-    return res.sendStatus(400);
+    throw new ValidationError('Car is used by track');
   }
 
   const { deletedCount } = await db.collection('cars').deleteOne({

@@ -1,42 +1,53 @@
 const asyncRoute = require('route-async');
 const { ObjectID } = require('mongodb');
 const { keyBy, flatten } = require('lodash');
+const { ValidationError } = require('@hapi/joi/lib/errors');
 
 const getDb = require('../../db');
 
+/**
+ * Check car ids for existence
+ *
+ * @param ids car ids
+ * @throws ValidationError if some car does not exist
+ */
 const validateCarIds = async (ids = []) => {
-  if (ids.length > 0) {
-    const db = await getDb();
-    const carIds = ids.map(id => new ObjectID(id));
-
-    const count = await db
-      .collection('cars')
-      .find({
-        _id: { $in: carIds }
-      })
-      .count();
-
-    return count === ids.length;
+  if (!ids.length) {
+    return;
   }
 
-  return true;
-};
-
-const getCars = async ids => {
   const db = await getDb();
 
-  if (ids.length === 0) {
+  const count = await db
+    .collection('cars')
+    .find({
+      _id: { $in: ids }
+    })
+    .count();
+
+  if (count !== ids.length) {
+    throw new ValidationError('Specified car(s) does not exist');
+  }
+};
+
+/**
+ * Get car documents by ids
+ */
+
+// pass db connection as argument? hmm, sounds good but connection is cached, makes no sense
+const getCars = async (carIds = []) => {
+  if (carIds.length === 0) {
     return [];
   }
 
-  const cars = await db
+  const db = await getDb();
+
+  return db
     .collection('cars')
     .find({
-      _id: { $in: ids.map(id => new ObjectID(id)) }
+      _id: { $in: carIds }
     })
     .toArray();
-
-  return cars;
 };
 
 module.exports.get = asyncRoute(async (req, res) => {
@@ -45,8 +56,10 @@ module.exports.get = asyncRoute(async (req, res) => {
     _id: new ObjectID(req.params.id)
   });
 
+  // enrich track with car objects
+  // aka code level JOIN (use denormalization? depends on the task..., read intensive or update intensive etc.)
   if (track) {
-    const cars = await getCars(track.cars);
+    const cars = await getCars(track.cars.map(car => new ObjectID(car)));
 
     return res.json({
       ...track,
@@ -57,7 +70,7 @@ module.exports.get = asyncRoute(async (req, res) => {
   return res.sendStatus(404);
 });
 
-// TODO Pagination?
+// TODO Pagination? infinite scroll?
 module.exports.getAll = asyncRoute(async (req, res) => {
   const db = await getDb();
   const { search } = req.query;
@@ -73,63 +86,77 @@ module.exports.getAll = asyncRoute(async (req, res) => {
     .find(filter)
     .toArray();
 
-  const allIds = flatten(tracks.map(track => track.cars || []));
+  // enrich track with car objects
+  // get all cars for all tracks in the single request
+  const allIds = flatten(tracks.map(track => track.cars));
 
-  const cars = await getCars(allIds);
+  const cars = await getCars(allIds.map(car => new ObjectID(car)));
+
+  // build map [car id] -> car
   const carsMap = keyBy(cars, '_id');
 
   res.json(
     tracks.map(track => ({
       ...track,
-      cars: track.cars && track.cars.map(car => carsMap[car])
+      cars: track.cars.map(car => carsMap[car])
     }))
   );
 });
 
 module.exports.post = asyncRoute(async (req, res) => {
-  const { body } = req;
+  const {
+    body: {
+      cars = [], // default to empty array to db
+      ...track
+    }
+  } = req;
 
   const db = await getDb();
+  const carIds = cars.map(id => new ObjectID(id));
 
-  const idsValid = await validateCarIds(body.cars);
+  await validateCarIds(carIds);
 
-  if (!idsValid) {
-    return res.sendStatus(400);
-  }
-
-  await db.collection('tracks').insert({
-    ...body,
-    cars: body.cars.map(id => new ObjectID(id))
+  const { insertedId } = await db.collection('tracks').insertOne({
+    ...track,
+    cars: carIds
   });
 
-  res.json(body);
+  res.json({
+    ...track,
+    _id: insertedId,
+    cars: await getCars(carIds)
+  });
 });
 
 module.exports.put = asyncRoute(async (req, res) => {
-  const { body } = req;
+  const { cars = [], ...track } = req;
+
+  const carIds = cars.map(carId => new ObjectID(carId));
+
+  await validateCarIds(carIds);
 
   const db = await getDb();
 
-  const idsValid = await validateCarIds(body.cars);
-
-  if (!idsValid) {
-    return res.sendStatus(400);
-  }
-
-  const {
-    result: { nModified }
-  } = await db.collection('tracks').replaceOne(
+  const { modifiedCount } = await db.collection('tracks').updateOne(
     {
       _id: new ObjectID(req.params.id)
     },
-    body
+    {
+      $set: {
+        ...track,
+        cars: carIds
+      }
+    }
   );
 
-  if (!nModified) {
+  if (!modifiedCount) {
     return res.sendStatus(404);
   }
 
-  return res.json(body);
+  return res.json({
+    ...track,
+    cars
+  });
 });
 
 module.exports.deleteTrack = asyncRoute(async (req, res) => {
@@ -138,6 +165,7 @@ module.exports.deleteTrack = asyncRoute(async (req, res) => {
     _id: new ObjectID(req.params.id)
   });
 
+  // nothing to delete?
   if (!deletedCount) {
     return res.sendStatus(404);
   }

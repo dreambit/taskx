@@ -1,4 +1,4 @@
-const apiBase = 'http://localhost:3000';
+const apiBase = 'http://localhost:3002';
 
 function checkStatus(res) {
   if (res.ok) {
@@ -49,4 +49,15 @@ export function deleteCarFromTrack(trackId, carId) {
     .then(checkStatus)
 }
 
+export function addTrack(track) {
+  return fetch(`${apiBase}/tracks`, {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST',
+    body: JSON.stringify(track)
+  })
+    .then(checkStatus)
+    .then(resp => resp.json());
+}
 
