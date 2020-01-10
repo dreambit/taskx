@@ -4,4 +4,4 @@
 
 ### Todo
 * Use internal ids instead of ObjectId
-* For high-load use ElasticSearch instead of mongo text index
+* For high-load use in addition ElasticSearch instead of mongo text index
