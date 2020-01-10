@@ -3,11 +3,11 @@ services:
   ui:
     build: ./ui
     ports:
-      - "80:80"
+      - "127.0.0.1:80:80"
   rest:
     build: ./back
-    ports:
-      - "3030:3030"
+    expose:
+      - "3000"
     depends_on:
       - mongo
   mongo:
