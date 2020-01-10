@@ -1,4 +1,4 @@
-const apiBase = 'http://localhost:3002';
+const apiBase = 'api';
 
 function checkStatus(res) {
   if (res.ok) {
