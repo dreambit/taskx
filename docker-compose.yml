@@ -6,7 +6,5 @@ services:
       - "80:80"
   rest:
     build: ./back
-    ports:
-      - "3000:3000"
   mongo:
     image: mongo
