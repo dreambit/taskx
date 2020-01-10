@@ -31,4 +31,6 @@ app.use((err, req, res, next) => {
   res.sendStatus(500);
 });
 
-app.listen(3000);
+app.listen(3000, () => {
+  console.log('Api is up and running on 3000');
+});
